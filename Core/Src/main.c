@@ -22,6 +22,7 @@
 #include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
+#include "mpu9250.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -56,7 +57,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+MPU9250 mpu9250; 
 /* USER CODE END 0 */
 
 /**
@@ -97,6 +98,33 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+	uint8_t whoami=mpu9250.readByte(MPU9250_ADDRESS,WHO_AM_I_MPU9250);
+
+	if(whoami==0x71) //WHO_AM_I should always be 0x68
+	{
+		HAL_Delay(100);
+		
+		mpu9250.resetMPU9250();	//reset registers to default status
+		mpu9250.calibrateMPU9250(gyroBias,accelBias);
+		HAL_Delay(200);
+		mpu9250.initMPU9250();
+		mpu9250.initAK8963(magCalibration);
+		HAL_Delay(50);
+	}
+	else
+	{
+		while(1); //loop forever if communication doesn't work
+	}
+		mpu9250.getAres();	//get accelerometer sensitivity
+		mpu9250.getGres();	//get gyro sensitivity
+		mpu9250.getMres();	//get magnetometer sensitivity
+	
+		magbias[0]=+470.;		//user environmental x-axis
+		magbias[1]=+120.;		//user environmental x-axis
+		magbias[2]=+125.;		//user environmental x-axis
+	
+	//MPU9250_Init();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -105,6 +133,47 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
+	if(mpu9250.readByte(MPU9250_ADDRESS,INT_STATUS) & 0x01)		//on interrupt, check if data ready interrupt
+	{
+		mpu9250.readAccelData(accelCount);  //read the x/y/z adc values
+		
+		// now we need to calculate the acceleration value into actual value
+		ax=(float) accelCount[0]*aRes;
+		ay=(float) accelCount[1]*aRes;
+		az=(float) accelCount[2]*aRes;
+		
+		mpu9250.readGyroData(gyroCount);	//read the x/y/z adc values
+		
+		//calculate the gyro value into actual degrees per second
+		gx=(float) gyroCount[0]*gRes;
+		gy=(float) gyroCount[1]*gRes;
+		gz=(float) gyroCount[2]*gRes;
+
+		mpu9250.readMagData(magCount);	//read the x/y/z adc values
+		
+		//calculate the magnetometer values in milliGuass
+		mx=(float)magCount[0]*mRes*magCalibration[0];
+		my=(float)magCount[1]*mRes*magCalibration[1];
+		mz=(float)magCount[2]*mRes*magCalibration[2];
+		
+		deltat=0.005;
+		mpu9250.MahonyQuaternionUpdate(ax,ay,az,gx*PI/180.0f,gy*PI/180.0f,gz*PI/180.0f,mx,my,mz);
+		
+		//
+		yaw  = atan2(2.0f*(q[1]*q[2]+q[0]*q[3]),q[0]*q[0]+q[1]*q[1]-q[2]*q[2]-q[3]*q[3]);
+		pitch=-asin (2.0f*(q[1]*q[3]-q[0]*q[2]));
+		roll = atan2(2.0f*(q[0]*q[1]+q[2]*q[3]),q[0]*q[0]-q[1]*q[1]-q[2]*q[2]+q[3]*q[3]);
+		
+		//tranform into degrees unit
+		pitch*=180.0f/PI;
+		yaw*=180.0f/PI;
+		yaw-=3.0f; 				//Declination at Danville, california is 13 degrees 48 minutes and 47 seconds on 2014-04-04
+		roll*=180.0f/PI;
+		
+		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_1);
+		HAL_Delay(50);
+	}
+		
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
