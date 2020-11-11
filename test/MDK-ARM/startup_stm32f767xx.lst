@@ -965,12 +965,12 @@ ARM Macro Assembler    Page 15
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M7.fp.dp --apcs=
 interwork --depend=me432proj\startup_stm32f767xx.d -ome432proj\startup_stm32f76
-7xx.o -I"C:\Users\ZYT-Yoga\OneDrive - 南方科技大学\桌面\ME432Proj\MDK-ARM\RTE" 
--IC:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include -IC:\Keil_v5\ARM\PACK\Keil\
-STM32F7xx_DFP\2.13.0\Drivers\CMSIS\Device\ST\STM32F7xx\Include --predefine="__M
-ICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 518" --predefine="_RTE_ SET
-A 1" --predefine="STM32F767xx SETA 1" --list=startup_stm32f767xx.lst startup_st
-m32f767xx.s
+7xx.o -I"C:\Users\ZYT-Yoga\OneDrive - 南方科技大学\桌面\ME432Proj\test\MDK-ARM\
+RTE" -IC:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include -IC:\Keil_v5\ARM\PACK\
+Keil\STM32F7xx_DFP\2.13.0\Drivers\CMSIS\Device\ST\STM32F7xx\Include --predefine
+="__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 518" --predefine="_RTE
+_ SETA 1" --predefine="STM32F767xx SETA 1" --list=startup_stm32f767xx.lst start
+up_stm32f767xx.s
 
 
 
